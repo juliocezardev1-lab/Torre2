@@ -1,10 +1,5 @@
-# --- MODO MANUTENÇÃO ---
-# Descomente a linha abaixo para ativar a manutenção
-# (Redireciona tudo  /* para manutencao.html com código 503)
-
-# /manutencao.html 503!
-
-# Para ativar: REMOVA O '#' do inicio da linha acima.
-# Para desativar: COLOQUE O '#' de volta ou apague a linha.
-
-# Redirecionamento padrão - manter por último
+# MODO MANUTENÇÃO DESCONTINUADO
+# Use server.cjs como método único e eficiente para manutenção
+# 
+# Para ativar: altere MAINTENANCE_MODE = true em server.cjs
+# Para desativar: altere MAINTENANCE_MODE = false em server.cjs
