@@ -23,6 +23,14 @@
         
         #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
         
+        /* Copyright Footer */
+        #copyright-footer {
+            position: fixed; bottom: 10px; left: 10px; z-index: 5;
+            color: #666; font-size: 0.65rem; font-family: monospace;
+            pointer-events: none; user-select: none; text-align: left;
+            line-height: 1.2; white-space: nowrap; letter-spacing: 0.5px;
+        }
+        
         /* UI Principal */
         #ui-layer {
             position: fixed; bottom: 0; left: 0; width: 100%;
@@ -189,6 +197,11 @@
 
     <div id="canvas-container"></div>
     
+    <!-- Copyright Footer (Not Touchable) -->
+    <div id="copyright-footer">
+        © 2025 Julio Cezar & Luiz Merchiori<br>Todos os Direitos Reservados
+    </div>
+    
     <div id="ui-layer">
         <div class="interactive-area">
             <div id="toggle-btn" onclick="toggleUI()">
@@ -313,7 +326,6 @@
             return true;
         }
 
-        // Modo Espectador: Ouve alterações mesmo sem senha
         function setupSpectatorMode() {
             if (!database) return;
             
@@ -350,7 +362,10 @@
             if(initFirebase()) {
                 setupSpectatorMode();
                 
-                database.ref('torre/status/lastActive').once('value').then(snapshot => {
+                const statusRef = database.ref('torre/status/lastActive');
+                if(!statusRef) return;  // BUG FIX: Null check
+                
+                statusRef.once('value').then(snapshot => {
                     const lastActive = snapshot.val() || 0;
                     const now = Date.now();
                     
@@ -361,7 +376,7 @@
                         document.getElementById('login-msg').innerText = "Livre. Digite a senha.";
                         document.getElementById('login-msg').style.color = "#4ade80"; 
                     }
-                });
+                }).catch(err => console.error("Erro ao verificar disponibilidade:", err));  // BUG FIX: Error handling
             }
         }
 
@@ -408,7 +423,14 @@
                 showLoginError("Tempo esgotado. Verifique conexão.");
             }, 8000);
 
-            database.ref('torre/status/lastActive').once('value').then(snapshot => {
+            const statusRef = database.ref('torre/status/lastActive');
+            if(!statusRef) {  // BUG FIX: Null check
+                clearTimeout(timeout);
+                showLoginError("Erro ao acessar banco de dados.");
+                return;
+            }
+
+            statusRef.once('value').then(snapshot => {
                 clearTimeout(timeout);
                 const lastActive = snapshot.val() || 0;
                 const now = Date.now();
@@ -424,7 +446,7 @@
                 }
             }).catch(error => {
                 clearTimeout(timeout);
-                showLoginError("Erro Firebase: " + error.code);
+                showLoginError("Erro Firebase: " + (error.code || error.message));  // BUG FIX: Better error message
             });
         }
 
@@ -444,16 +466,30 @@
             if(!database) return;
             
             try {
-                database.ref('torre/status/lastActive').set(Date.now());
+                const statusRef = database.ref('torre/status/lastActive');
+                if(!statusRef) return;  // BUG FIX: Null check
+                
+                statusRef.set(Date.now()).catch(err => console.error("Erro ao iniciar keep-alive:", err));
+                
                 keepAliveInterval = setInterval(() => {
-                    if(database) {
-                        database.ref('torre/status/lastActive').set(Date.now());
+                    try {
+                        if(database) {
+                            const ref = database.ref('torre/status/lastActive');
+                            if(ref) ref.set(Date.now()).catch(err => console.error("Erro no keep-alive:", err));
+                        }
+                    } catch(e) {
+                        console.error("Erro no intervalo keep-alive:", e);
                     }
                 }, 5000);
                 
                 window.addEventListener('beforeunload', () => {
-                    if(database) {
-                        database.ref('torre/status/lastActive').set(0);
+                    try {
+                        if(database) {
+                            const ref = database.ref('torre/status/lastActive');
+                            if(ref) ref.set(0);
+                        }
+                    } catch(e) {
+                        console.error("Erro ao limpar keep-alive:", e);
                     }
                 });
             } catch(e) {
@@ -467,6 +503,7 @@
         let currentEffect = 'solid'; 
         let baseColor = new THREE.Color("#ffaa00"); 
         let colorPicker;
+        let lastDiscoChange = 0;  // BUG FIX: Variável não declarada
 
         function updateBackground(hexColor) {
             document.body.style.background = `radial-gradient(circle at center, ${hexColor}33 0%, #050505 100%)`;
@@ -560,19 +597,27 @@
                 
                 const pickerContainer = document.getElementById('color-picker');
                 if(pickerContainer) {
-                    colorPicker = new iro.ColorPicker('#color-picker', { width: 220, color: "#ffaa00", borderWidth: 2, borderColor: "#fff", layout: [{ component: iro.ui.Wheel }, { component: iro.ui.Slider, options: { sliderType: 'value' } }] });
-                    
-                    colorPicker.on('color:change', (color) => {
-                        // Atualiza localmente SEMPRE
-                        baseColor.set(color.hexString); 
-                        if (currentEffect === 'solid') applyColor(baseColor, 0.9, 2);
+                    try {
+                        colorPicker = new iro.ColorPicker('#color-picker', { width: 220, color: "#ffaa00", borderWidth: 2, borderColor: "#fff", layout: [{ component: iro.ui.Wheel }, { component: iro.ui.Slider, options: { sliderType: 'value' } }] });
                         
-                        // Envia SÓ se for dono
-                        if(amITheController && database) {
-                            database.ref('torre/cor').set(color.hexString);
-                            database.ref('torre/status/lastActive').set(Date.now());
-                        }
-                    });
+                        colorPicker.on('color:change', (color) => {
+                            if(!color || !color.hexString) return;  // BUG FIX: Null check
+                            
+                            // Atualiza localmente SEMPRE
+                            baseColor.set(color.hexString); 
+                            if (currentEffect === 'solid') applyColor(baseColor, 0.9, 2);
+                            
+                            // Envia SÓ se for dono
+                            if(amITheController && database) {
+                                const ref = database.ref('torre/cor');
+                                if(ref) ref.set(color.hexString).catch(err => console.error("Erro ao atualizar cor:", err));
+                                const statusRef = database.ref('torre/status/lastActive');
+                                if(statusRef) statusRef.set(Date.now()).catch(err => console.error("Erro ao atualizar status:", err));
+                            }
+                        });
+                    } catch(e) {
+                        console.error("Erro ao inicializar color picker:", e);
+                    }
                 }
                 
                 updateBackground("#ffaa00");
