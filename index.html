@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Torre Eiffel - Controle Exclusivo</title>
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="Imagens/favcon.png">
+    <link rel="shortcut icon" type="image/png" href="Imagens/favcon.png">
+    
     <!-- Estilos -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -313,19 +317,25 @@
         function setupSpectatorMode() {
             if (!database) return;
             
-            database.ref('torre/cor').on('value', (snapshot) => {
-                // Só atualiza se eu não estiver interagindo agora (para não brigar com o input local)
-                if(!amITheController && snapshot.val()) {
-                    updateVisuals(snapshot.val());
-                    colorPicker.color.hexString = snapshot.val();
-                }
-            });
-            database.ref('torre/efeito').on('value', (snapshot) => {
-                if(!amITheController && snapshot.val()) {
-                    currentEffect = snapshot.val();
-                    updateUIButtons(currentEffect);
-                }
-            });
+            try {
+                database.ref('torre/cor').on('value', (snapshot) => {
+                    // Só atualiza se eu não estiver interagindo agora (para não brigar com o input local)
+                    if(!amITheController && snapshot.val()) {
+                        updateVisuals(snapshot.val());
+                        if(colorPicker && colorPicker.color) {
+                            colorPicker.color.hexString = snapshot.val();
+                        }
+                    }
+                });
+                database.ref('torre/efeito').on('value', (snapshot) => {
+                    if(!amITheController && snapshot.val()) {
+                        currentEffect = snapshot.val();
+                        updateUIButtons(currentEffect);
+                    }
+                });
+            } catch(e) {
+                console.error("Erro ao configurar modo espectador:", e);
+            }
         }
 
         function openLogin() {
@@ -422,7 +432,8 @@
             const btnStatus = document.getElementById('connect-status-btn');
             btnStatus.className = 'connected';
             const lockIcon = document.getElementById('lock-icon');
-            lockIcon.innerHTML = '<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"></path>';
+            // Usar textContent para inserir SVG como HTML completo
+            lockIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"></path></svg>';
             document.getElementById('conn-text').innerText = "Conectado";
             document.getElementById('status-msg').innerText = "Controle Ativo (Sua Vez)";
             document.getElementById('status-msg').style.color = "#00ff00";
@@ -430,13 +441,24 @@
 
         function startKeepAlive() {
             if(keepAliveInterval) clearInterval(keepAliveInterval);
-            database.ref('torre/status/lastActive').set(Date.now());
-            keepAliveInterval = setInterval(() => {
+            if(!database) return;
+            
+            try {
                 database.ref('torre/status/lastActive').set(Date.now());
-            }, 5000);
-            window.addEventListener('beforeunload', () => {
-                database.ref('torre/status/lastActive').set(0); 
-            });
+                keepAliveInterval = setInterval(() => {
+                    if(database) {
+                        database.ref('torre/status/lastActive').set(Date.now());
+                    }
+                }, 5000);
+                
+                window.addEventListener('beforeunload', () => {
+                    if(database) {
+                        database.ref('torre/status/lastActive').set(0);
+                    }
+                });
+            } catch(e) {
+                console.error("Erro ao iniciar keep-alive:", e);
+            }
         }
 
         function toggleUI() { document.getElementById('ui-layer').classList.toggle('hidden-ui'); }
@@ -499,48 +521,66 @@
         }
 
         function init() {
-            // Inicia reprodução de áudio
-            initAudio();
-            
-            // Tenta inicializar Firebase logo (Espectador)
-            if(firebaseConfig.apiKey !== "SUA_API_KEY") {
-                initFirebase();
-                setupSpectatorMode();
-            }
-
-            const container = document.getElementById('canvas-container');
-            scene = new THREE.Scene(); scene.fog = new THREE.FogExp2(0x050505, 0.02);
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 18, 50); 
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight); renderer.setPixelRatio(window.devicePixelRatio);
-            container.appendChild(renderer.domElement);
-            scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-            pointLight = new THREE.PointLight(0xffaa00, 2, 60); pointLight.position.set(0, 15, 0); scene.add(pointLight);
-            towerMaterial = new THREE.LineBasicMaterial({ color: 0xffaa00, linewidth: 1, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
-            createCustomTower();
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true; controls.dampingFactor = 0.05; controls.autoRotate = true; controls.autoRotateSpeed = 2.0; controls.target.set(0, 15, 0);
-            
-            colorPicker = new iro.ColorPicker('#color-picker', { width: 220, color: "#ffaa00", borderWidth: 2, borderColor: "#fff", layout: [{ component: iro.ui.Wheel }, { component: iro.ui.Slider, options: { sliderType: 'value' } }] });
-            
-            updateBackground("#ffaa00");
-
-            colorPicker.on('color:change', (color) => {
-                // Atualiza localmente SEMPRE
-                baseColor.set(color.hexString); 
-                if (currentEffect === 'solid') applyColor(baseColor, 0.9, 2);
+            try {
+                // Inicia reprodução de áudio
+                initAudio();
                 
-                // Envia SÓ se for dono
-                if(amITheController && database) {
-                    database.ref('torre/cor').set(color.hexString);
-                    database.ref('torre/status/lastActive').set(Date.now());
+                // Tenta inicializar Firebase logo (Espectador)
+                if(firebaseConfig.apiKey !== "SUA_API_KEY") {
+                    initFirebase();
+                    setupSpectatorMode();
                 }
-            });
-            
-            // Removido o evento que pedia login ao soltar
-            
-            animate(); window.addEventListener('resize', onResize);
+
+                const container = document.getElementById('canvas-container');
+                if(!container) {
+                    console.error("Container não encontrado");
+                    return;
+                }
+                
+                scene = new THREE.Scene(); 
+                scene.fog = new THREE.FogExp2(0x050505, 0.02);
+                camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.set(0, 18, 50); 
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setSize(window.innerWidth, window.innerHeight); 
+                renderer.setPixelRatio(window.devicePixelRatio);
+                container.appendChild(renderer.domElement);
+                scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+                pointLight = new THREE.PointLight(0xffaa00, 2, 60); 
+                pointLight.position.set(0, 15, 0); 
+                scene.add(pointLight);
+                towerMaterial = new THREE.LineBasicMaterial({ color: 0xffaa00, linewidth: 1, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
+                createCustomTower();
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true; 
+                controls.dampingFactor = 0.05; 
+                controls.autoRotate = true; 
+                controls.autoRotateSpeed = 2.0; 
+                controls.target.set(0, 15, 0);
+                
+                const pickerContainer = document.getElementById('color-picker');
+                if(pickerContainer) {
+                    colorPicker = new iro.ColorPicker('#color-picker', { width: 220, color: "#ffaa00", borderWidth: 2, borderColor: "#fff", layout: [{ component: iro.ui.Wheel }, { component: iro.ui.Slider, options: { sliderType: 'value' } }] });
+                    
+                    colorPicker.on('color:change', (color) => {
+                        // Atualiza localmente SEMPRE
+                        baseColor.set(color.hexString); 
+                        if (currentEffect === 'solid') applyColor(baseColor, 0.9, 2);
+                        
+                        // Envia SÓ se for dono
+                        if(amITheController && database) {
+                            database.ref('torre/cor').set(color.hexString);
+                            database.ref('torre/status/lastActive').set(Date.now());
+                        }
+                    });
+                }
+                
+                updateBackground("#ffaa00");
+                animate(); 
+                window.addEventListener('resize', onResize);
+            } catch(e) {
+                console.error("Erro ao inicializar:", e);
+            }
         }
 
         // --- Geometria da Torre (Igual ao anterior) ---
