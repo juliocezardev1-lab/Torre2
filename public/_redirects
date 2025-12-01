@@ -1,5 +1,20 @@
-# MODO MANUTENÇÃO DESCONTINUADO
-# Use server.cjs como método único e eficiente para manutenção
-# 
-# Para ativar: altere MAINTENANCE_MODE = true em server.cjs
-# Para desativar: altere MAINTENANCE_MODE = false em server.cjs
+# Netlify - Regra de Manutenção (comentada)
+# ------------------------------------------------------------------
+# Para ativar uma manutenção forçada que responde 503 (Service Unavailable)
+# para TODAS as rotas e serve `maintenance.html`, descomente a linha abaixo.
+# Mantenha-a comentada para operação normal do site.
+#
+# ATENÇÃO: quando descomentar, todo o tráfego será servido com 503 -> /maintenance.html
+#          use apenas durante janelas de manutenção planejada.
+#
+# Exemplo (descomente esta linha para ativar):
+# /*  /maintenance.html  503  */
+#
+# Notas adicionais:
+# - Você também pode controlar manutenção via `netlify.toml` ou variáveis de ambiente
+#   se preferir uma abordagem baseada em CI/CD. Este arquivo fornece um método
+#   manual e explícito (descomentar para ativar).
+
+## Histórico / fallback
+# Se sua configuração anterior usava outro mecanismo (ex: server.cjs), mantenha
+# as instruções ali; esta regra é um método direto para Netlify estático.
