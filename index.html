@@ -47,6 +47,13 @@
             font-size: 1.2rem; text-align: center; outline: none; transition: border 0.3s;
         }
         .login-input:focus { border-color: #fbbf24; }
+        .toggle-password-btn {
+            position: absolute; right: 15px; background: none; border: none; 
+            color: #888; cursor: pointer; font-size: 1.2rem; 
+            transition: color 0.2s; padding: 0; width: 30px; height: 30px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .toggle-password-btn:hover { color: #fbbf24; }
         .login-btn {
             background: #fbbf24; color: black; font-weight: bold;
             padding: 15px 40px; border-radius: 10px; border: none;
@@ -61,11 +68,28 @@
             pointer-events: auto; background: rgba(20,20,20,0.9); padding: 20px; padding-top: 10px; 
             border-top-left-radius: 20px; border-top-right-radius: 20px; border: 1px solid #333; border-bottom: none;
             backdrop-filter: blur(10px); box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
-            display: flex; flex-direction: column; align-items: center; min-width: 300px;
+            display: flex; flex-direction: column; align-items: center; 
+            min-width: 300px;
             max-height: 70vh; 
             overflow-y: auto; 
             scrollbar-width: thin; 
             scrollbar-color: #555 #1a1a1a;
+        }
+        
+        /* Responsividade: Aumenta no PC, limita no celular */
+        @media (min-width: 768px) {
+            .interactive-area {
+                min-width: 400px;
+                max-width: 90%;
+            }
+        }
+        
+        @media (max-width: 767px) {
+            .interactive-area {
+                min-width: calc(100vw - 40px);
+                max-width: calc(100vw - 40px);
+                max-height: calc(100vh - 100px);
+            }
         }
         .interactive-area::-webkit-scrollbar { width: 6px; }
         .interactive-area::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-radius: 3px; margin: 10px 0; }
@@ -96,7 +120,15 @@
             margin-top: 15px; padding-top: 15px; border-top: 1px solid #333; padding-right: 5px; 
             transition: opacity 0.3s;
         }
-        /* Removi a classe disabled para que todos possam clicar */
+        
+        /* Responsividade para grid de efeitos */
+        @media (max-width: 480px) {
+            .effects-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+                padding-right: 0px;
+            }
+        }
         
         .effect-btn { background: #333; border: none; border-radius: 8px; color: #ddd; font-size: 0.7rem; padding: 10px 4px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; font-weight: bold; display: flex; justify-content: center; align-items: center; }
         .effect-btn.active { background: #fbbf24; color: #000; box-shadow: 0 0 10px #fbbf24; }
@@ -112,13 +144,21 @@
 </head>
 <body>
 
+    <!-- Audio em Loop -->
+    <audio id="background-audio" preload="auto" loop style="display: none;">
+        <source src="Audio/Audio.mp3" type="audio/mpeg">
+    </audio>
+
     <!-- TELA DE LOGIN (MODAL) -->
     <div id="login-screen">
         <div class="login-box">
             <span class="close-login" onclick="closeLogin()">×</span>
             <h1 style="margin-bottom: 5px; font-size: 1.5rem;">Controle Real</h1>
             <p id="login-msg" style="color:#888; font-size: 0.9rem; margin-bottom: 20px;">Digite a senha para assumir o controle.</p>
-            <input type="password" id="password-input" class="login-input" placeholder="Senha">
+            <div style="position: relative; display: flex; align-items: center;">
+                <input type="password" id="password-input" class="login-input" placeholder="Senha" style="margin: 20px 0; width: 100%; padding-right: 45px;">
+                <button id="toggle-password-btn" class="toggle-password-btn" onclick="togglePasswordVisibility()">👁️</button>
+            </div>
             <button id="login-action-btn" class="login-btn" onclick="checkPassword()">ASSUMIR CONTROLE</button>
             <p id="login-error" style="color: red; margin-top: 15px; display: none; font-size: 0.9rem; line-height: 1.2;">Senha Incorreta!</p>
         </div>
@@ -167,6 +207,35 @@
     </div>
 
     <script>
+        // --- SISTEMA DE ÁUDIO ---
+        function initAudio() {
+            const audio = document.getElementById('background-audio');
+            if(audio) {
+                audio.volume = 0.3; // 30% de volume
+                audio.play().catch(err => {
+                    console.log("Autoplay bloqueado. O áudio iniciará ao primeiro clique/interação.", err);
+                    // Tenta reproduzir após primeira interação
+                    document.addEventListener('click', function playAudioOnce() {
+                        audio.play().catch(e => console.log("Erro ao reproduzir áudio:", e));
+                        document.removeEventListener('click', playAudioOnce);
+                    }, { once: true });
+                });
+            }
+        }
+
+        function togglePasswordVisibility() {
+            const input = document.getElementById('password-input');
+            const btn = document.getElementById('toggle-password-btn');
+            
+            if(input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁️';
+            }
+        }
+
         // --- 1. SEGURANÇA E LÓGICA DE CONEXÃO ---
         const MY_PASSWORD = "paladinoseiffel"; 
         
@@ -391,6 +460,9 @@
         }
 
         function init() {
+            // Inicia reprodução de áudio
+            initAudio();
+            
             // Tenta inicializar Firebase logo (Espectador)
             if(firebaseConfig.apiKey !== "SUA_API_KEY") {
                 initFirebase();
