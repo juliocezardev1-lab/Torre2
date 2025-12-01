@@ -1,0 +1,106 @@
+<!-- 
+================================================================================
+    EXEMPLO PRÁTICO - ATIVAR/DESATIVAR MODO DE MANUTENÇÃO
+================================================================================
+
+Para ATIVAR a manutenção, siga UM destes passos:
+
+1️⃣ OPÇÃO 1 - SERVER LOCAL (server.cjs)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   ANTES (DESATIVADO):
+   const MAINTENANCE_MODE = false;
+
+   DEPOIS (ATIVADO):
+   const MAINTENANCE_MODE = true;
+
+   ✓ Reinicie o servidor com: node server.cjs
+
+
+2️⃣ OPÇÃO 2 - NETLIFY (_redirects)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   ANTES (DESATIVADO):
+   # /manutencao.html 503!
+
+   DEPOIS (ATIVADO):
+   /manutencao.html 503!
+
+   ✓ Faça commit e push para o repositório
+
+
+3️⃣ OPÇÃO 3 - PÁGINA DE MANUTENÇÃO (manutencao.html)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   ANTES (DESATIVADO):
+   const MAINTENANCE_MODE = false;
+
+   DEPOIS (ATIVADO):
+   const MAINTENANCE_MODE = true;
+
+   ✓ Salve e recarregue a página
+
+
+================================================================================
+    O QUE ACONTECE
+================================================================================
+
+✓ HTTP Status: 503 (Service Unavailable)
+✓ Redireciona TODAS as requisições para manutencao.html
+✓ Mostra página amigável com spinner
+✓ Tenta reconectar a cada 5 segundos
+✓ Recarrega automaticamente quando voltando online
+✓ Envia cabeçalho Retry-After: 3600 (1 hora)
+
+
+================================================================================
+    EXEMPLOS VISUAIS
+================================================================================
+
+ARQUIVO: server.cjs
+────────────────────────────────────────────────────────────────────────────
+
+❌ DESATIVADO:
+const MAINTENANCE_MODE = false;  // Site normal
+
+✅ ATIVADO:
+const MAINTENANCE_MODE = true;   // Todos redirecionados para manutencao.html
+
+
+ARQUIVO: public/_redirects
+────────────────────────────────────────────────────────────────────────────
+
+❌ DESATIVADO:
+# /manutencao.html 503!         // Comentado = desativado
+
+✅ ATIVADO:
+/manutencao.html 503!            // Sem # = ativado
+
+
+================================================================================
+    PARA DESATIVAR
+================================================================================
+
+Simplesmente REVERTA a mudança (coloque de volta o estado original)
+
+✓ server.cjs:        const MAINTENANCE_MODE = false;
+✓ public/_redirects: # /manutencao.html 503!
+✓ manutencao.html:   const MAINTENANCE_MODE = false;
+
+================================================================================
+    TROUBLESHOOTING
+================================================================================
+
+❓ O servidor não responde?
+→ Certifique-se de ter reiniciado o servidor após alterar server.cjs
+
+❓ Netlify não está funcionando?
+→ Verifique se o arquivo _redirects está em public/ (não na raiz)
+→ Faça commit e push para ativar as mudanças
+
+❓ A página de manutenção não aparece?
+→ Verifique se o arquivo manutencao.html existe no diretório raiz
+→ Verifique o console do navegador para erros
+
+================================================================================
+-->
