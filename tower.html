@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Torre Eiffel 3D</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #canvas {
+            flex: 1;
+            display: block;
+            background: radial-gradient(circle at center, #1a1a3a 0%, #000000 100%);
+        }
+        
+        .ui-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #fbbf24;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        .ui-panel h1 {
+            color: #fbbf24;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: #fbbf24;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background: #f59e0b;
+            transform: scale(1.05);
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        .status {
+            margin-top: 10px;
+            text-align: center;
+            color: #999;
+            font-size: 0.85em;
+        }
+    </style>
+
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="ui-panel">
+        <h1>🗼 Torre Eiffel 3D</h1>
+        <div class="controls">
+            <button onclick="changeColor('#fbbf24')">Ouro</button>
+            <button onclick="changeColor('#ff0000')">Vermelho</button>
+            <button onclick="changeColor('#00ff00')">Verde</button>
+            <button onclick="changeColor('#0099ff')">Azul</button>
+            <button onclick="changeColor('#ff00ff')">Magenta</button>
+        </div>
+        <div class="status">Arraste para girar • Toque e arraste no celular</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let currentColor = '#fbbf24';
+        let mouseX = 0, mouseY = 0;
+        let rotationX = 0, rotationY = 0;
+        let isDragging = false;
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        function changeColor(color) {
+            currentColor = color;
+        }
+        
+        function drawTower() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            // Fundo
+            ctx.fillStyle = '#0a0a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Gradiente radial
+            const gradient = ctx.createRadialGradient(
+                centerX, centerY, 100,
+                centerX, centerY, Math.max(canvas.width, canvas.height)
+            );
+            gradient.addColorStop(0, '#1a1a3a');
+            gradient.addColorStop(1, '#000000');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(rotationY * 0.01);
+            
+            // Desenhar Torre Eiffel
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = 2;
+            
+            drawTowerStructure();
+            
+            ctx.restore();
+        }
+        
+        function drawTowerStructure() {
+            const scale = 1.5;
+            
+            // Base quadrada
+            ctx.beginPath();
+            ctx.moveTo(-60 * scale, 80 * scale);
+            ctx.lineTo(60 * scale, 80 * scale);
+            ctx.lineTo(60 * scale, -80 * scale);
+            ctx.lineTo(-60 * scale, -80 * scale);
+            ctx.closePath();
+            ctx.stroke();
+            
+            // Pilares da base
+            ctx.beginPath();
+            ctx.moveTo(-60 * scale, 80 * scale);
+            ctx.lineTo(-30 * scale, -20 * scale);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(60 * scale, 80 * scale);
+            ctx.lineTo(30 * scale, -20 * scale);
+            ctx.stroke();
+            
+            // Primeiro plano
+            ctx.beginPath();
+            ctx.moveTo(-40 * scale, 0);
+            ctx.lineTo(40 * scale, 0);
+            ctx.lineTo(40 * scale, -40 * scale);
+            ctx.lineTo(-40 * scale, -40 * scale);
+            ctx.closePath();
+            ctx.stroke();
+            
+            // Diagonais do primeiro plano
+            ctx.beginPath();
+            ctx.moveTo(-30 * scale, -20 * scale);
+            ctx.lineTo(30 * scale, -20 * scale);
+            ctx.stroke();
+            
+            // Segundo plano
+            ctx.beginPath();
+            ctx.moveTo(-20 * scale, -60 * scale);
+            ctx.lineTo(20 * scale, -60 * scale);
+            ctx.lineTo(20 * scale, -100 * scale);
+            ctx.lineTo(-20 * scale, -100 * scale);
+            ctx.closePath();
+            ctx.stroke();
+            
+            // Pilares do meio para topo
+            ctx.beginPath();
+            ctx.moveTo(-30 * scale, -20 * scale);
+            ctx.lineTo(-10 * scale, -60 * scale);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(30 * scale, -20 * scale);
+            ctx.lineTo(10 * scale, -60 * scale);
+            ctx.stroke();
+            
+            // Topo (pico)
+            ctx.beginPath();
+            ctx.moveTo(-20 * scale, -60 * scale);
+            ctx.lineTo(0, -140 * scale);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(20 * scale, -60 * scale);
+            ctx.lineTo(0, -140 * scale);
+            ctx.stroke();
+            
+            // Antena
+            ctx.beginPath();
+            ctx.moveTo(0, -140 * scale);
+            ctx.lineTo(0, -160 * scale);
+            ctx.stroke();
+            
+            // Ponto no topo da antena
+            ctx.fillStyle = currentColor;
+            ctx.beginPath();
+            ctx.arc(0, -160 * scale, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        function animate() {
+            drawTower();
+            requestAnimationFrame(animate);
+        }
+        
+        // Event listeners
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                rotationY += (e.clientX - mouseX) * 0.5;
+                rotationX += (e.clientY - mouseY) * 0.5;
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            }
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        
+        canvas.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            mouseX = e.touches[0].clientX;
+            mouseY = e.touches[0].clientY;
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                rotationY += (e.touches[0].clientX - mouseX) * 0.5;
+                rotationX += (e.touches[0].clientY - mouseY) * 0.5;
+                mouseX = e.touches[0].clientX;
+                mouseY = e.touches[0].clientY;
+            }
+        });
+        
+        canvas.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+        
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Inicializar
+        resizeCanvas();
+        animate();
+    </script>
+</body>
+</html>
