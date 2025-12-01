@@ -54,6 +54,18 @@
             display: flex; align-items: center; justify-content: center;
         }
         .toggle-password-btn:hover { color: #fbbf24; }
+        
+        /* Botão de Mute/Unmute */
+        #audio-toggle-btn {
+            position: fixed; top: 20px; right: 20px; z-index: 100;
+            background: rgba(20, 20, 20, 0.8); border: 1px solid #333; 
+            color: #888; cursor: pointer; width: 40px; height: 40px;
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s; padding: 0;
+        }
+        #audio-toggle-btn:hover { border-color: #fbbf24; color: #fbbf24; background: rgba(20, 20, 20, 0.95); }
+        #audio-toggle-btn.muted { color: #ff4444; }
+        #audio-toggle-btn.muted:hover { border-color: #ff4444; color: #ff6666; }
         .login-btn {
             background: #fbbf24; color: black; font-weight: bold;
             padding: 15px 40px; border-radius: 10px; border: none;
@@ -149,6 +161,11 @@
         <source src="Audio/Audio.mp3" type="audio/mpeg">
     </audio>
 
+    <!-- Botão de Mutar/Desmutar -->
+    <button id="audio-toggle-btn" onclick="toggleAudio()" title="Mutar Áudio">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a7 7 0 0 1 0 9.9M19.07 4.93a11 11 0 0 1 0 15.66"></path></svg>
+    </button>
+
     <!-- TELA DE LOGIN (MODAL) -->
     <div id="login-screen">
         <div class="login-box">
@@ -157,7 +174,9 @@
             <p id="login-msg" style="color:#888; font-size: 0.9rem; margin-bottom: 20px;">Digite a senha para assumir o controle.</p>
             <div style="position: relative; display: flex; align-items: center;">
                 <input type="password" id="password-input" class="login-input" placeholder="Senha" style="margin: 20px 0; width: 100%; padding-right: 45px;">
-                <button id="toggle-password-btn" class="toggle-password-btn" onclick="togglePasswordVisibility()">👁️</button>
+                <button id="toggle-password-btn" class="toggle-password-btn" onclick="togglePasswordVisibility()" title="Mostrar/Ocultar Senha">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
             </div>
             <button id="login-action-btn" class="login-btn" onclick="checkPassword()">ASSUMIR CONTROLE</button>
             <p id="login-error" style="color: red; margin-top: 15px; display: none; font-size: 0.9rem; line-height: 1.2;">Senha Incorreta!</p>
@@ -175,7 +194,7 @@
             <div class="header-bar">
                 <h1>Torre Eiffel</h1>
                 <button id="connect-status-btn" onclick="openLogin()">
-                    <span id="lock-icon">🔒</span> <span id="conn-text">Simulação</span>
+                    <svg id="lock-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> <span id="conn-text">Simulação</span>
                 </button>
             </div>
 
@@ -183,23 +202,23 @@
             
             <div id="effects-container" class="effects-grid">
                 <button class="effect-btn active" onclick="setEffect('solid')" id="btn-solid">Fixa</button>
-                <button class="effect-btn" onclick="setEffect('rainbow')" id="btn-rainbow">🌈 Rainbow</button>
-                <button class="effect-btn" onclick="setEffect('fire')" id="btn-fire">🔥 Fogo</button>
-                <button class="effect-btn" onclick="setEffect('heartbeat')" id="btn-heartbeat">❤ Heart</button>
-                <button class="effect-btn" onclick="setEffect('pisca')" id="btn-pisca">✨ Pisca</button>
-                <button class="effect-btn" onclick="setEffect('disco')" id="btn-disco">🎉 Disco</button>
-                <button class="effect-btn" onclick="setEffect('fade')" id="btn-fade">🌊 Fade</button>
-                <button class="effect-btn" onclick="setEffect('thunder')" id="btn-thunder">⚡ Trovão</button>
-                <button class="effect-btn" onclick="setEffect('sos')" id="btn-sos">🆘 SOS</button>
-                <button class="effect-btn" onclick="setEffect('france')" id="btn-france">🇫🇷 França</button>
-                <button class="effect-btn" onclick="setEffect('brazil')" id="btn-brazil">🇧🇷 Brasil</button>
-                <button class="effect-btn" onclick="setEffect('aurora')" id="btn-aurora">🌌 Aurora</button>
-                <button class="effect-btn" onclick="setEffect('xmas')" id="btn-xmas">🎄 Natal</button>
-                <button class="effect-btn" onclick="setEffect('halloween')" id="btn-halloween">🎃 Hallow</button>
-                <button class="effect-btn" onclick="setEffect('sunset')" id="btn-sunset">🌅 Sunset</button>
-                <button class="effect-btn" onclick="setEffect('police')" id="btn-police">🚨 Polícia</button>
-                <button class="effect-btn" onclick="setEffect('ice')" id="btn-ice">❄ Gelo</button>
-                <button class="effect-btn" onclick="setEffect('candy')" id="btn-candy">🍬 Candy</button>
+                <button class="effect-btn" onclick="setEffect('rainbow')" id="btn-rainbow">Rainbow</button>
+                <button class="effect-btn" onclick="setEffect('fire')" id="btn-fire">Fogo</button>
+                <button class="effect-btn" onclick="setEffect('heartbeat')" id="btn-heartbeat">Batimento</button>
+                <button class="effect-btn" onclick="setEffect('pisca')" id="btn-pisca">Pisca</button>
+                <button class="effect-btn" onclick="setEffect('disco')" id="btn-disco">Disco</button>
+                <button class="effect-btn" onclick="setEffect('fade')" id="btn-fade">Fade</button>
+                <button class="effect-btn" onclick="setEffect('thunder')" id="btn-thunder">Trovão</button>
+                <button class="effect-btn" onclick="setEffect('sos')" id="btn-sos">SOS</button>
+                <button class="effect-btn" onclick="setEffect('france')" id="btn-france">França</button>
+                <button class="effect-btn" onclick="setEffect('brazil')" id="btn-brazil">Brasil</button>
+                <button class="effect-btn" onclick="setEffect('aurora')" id="btn-aurora">Aurora</button>
+                <button class="effect-btn" onclick="setEffect('xmas')" id="btn-xmas">Natal</button>
+                <button class="effect-btn" onclick="setEffect('halloween')" id="btn-halloween">Halloween</button>
+                <button class="effect-btn" onclick="setEffect('sunset')" id="btn-sunset">Sunset</button>
+                <button class="effect-btn" onclick="setEffect('police')" id="btn-police">Polícia</button>
+                <button class="effect-btn" onclick="setEffect('ice')" id="btn-ice">Gelo</button>
+                <button class="effect-btn" onclick="setEffect('candy')" id="btn-candy">Candy</button>
             </div>
 
             <div id="status-msg">Modo: Simulador Local</div>
@@ -229,10 +248,29 @@
             
             if(input.type === 'password') {
                 input.type = 'text';
-                btn.textContent = '🙈';
+                btn.title = 'Ocultar Senha';
             } else {
                 input.type = 'password';
-                btn.textContent = '👁️';
+                btn.title = 'Mostrar Senha';
+            }
+        }
+
+        let isAudioMuted = false;
+
+        function toggleAudio() {
+            const audio = document.getElementById('background-audio');
+            const btn = document.getElementById('audio-toggle-btn');
+            
+            if(audio.paused) {
+                audio.play().catch(e => console.log("Erro ao reproduzir áudio:", e));
+                isAudioMuted = false;
+                btn.classList.remove('muted');
+                btn.title = 'Mutar Áudio';
+            } else {
+                audio.pause();
+                isAudioMuted = true;
+                btn.classList.add('muted');
+                btn.title = 'Desmutar Áudio';
             }
         }
 
@@ -307,10 +345,10 @@
                     const now = Date.now();
                     
                     if(now - lastActive < 15000) {
-                        document.getElementById('login-msg').innerText = "⚠ SISTEMA OCUPADO! Aguarde.";
+                        document.getElementById('login-msg').innerText = "Sistema ocupado. Aguarde.";
                         document.getElementById('login-msg').style.color = "orange";
                     } else {
-                        document.getElementById('login-msg').innerText = "LIVRE. Digite a senha.";
+                        document.getElementById('login-msg').innerText = "Livre. Digite a senha.";
                         document.getElementById('login-msg').style.color = "#4ade80"; 
                     }
                 });
@@ -367,7 +405,7 @@
 
                 // LIMITADOR (15s)
                 if (now - lastActive < 15000) {
-                    showLoginError("🚫 TORRE OCUPADA!\nAguarde 15s sem uso.");
+                    showLoginError("TORRE OCUPADA!\nAguarde 15s sem uso.");
                 } else {
                     amITheController = true;
                     closeLogin();
@@ -383,7 +421,8 @@
         function uiSuccess() {
             const btnStatus = document.getElementById('connect-status-btn');
             btnStatus.className = 'connected';
-            document.getElementById('lock-icon').innerText = "🔓";
+            const lockIcon = document.getElementById('lock-icon');
+            lockIcon.innerHTML = '<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"></path>';
             document.getElementById('conn-text').innerText = "Conectado";
             document.getElementById('status-msg').innerText = "Controle Ativo (Sua Vez)";
             document.getElementById('status-msg').style.color = "#00ff00";
@@ -420,11 +459,11 @@
                 // Mensagem amigável para quem está só brincando
                 const labels = {
                     'solid': 'Cor Fixa', 'rainbow': 'Arco-Íris', 'fire': 'Fogueira',
-                    'heartbeat': 'Batimento', 'pisca': 'Estroboscópio', 'disco': 'Modo Festa',
+                    'heartbeat': 'Batimento Cardíaco', 'pisca': 'Estroboscópio', 'disco': 'Disco',
                     'fade': 'Respiração', 'police': 'Polícia', 'xmas': 'Natal',
-                    'thunder': 'Tempestade', 'sos': 'Sinal SOS', 'france': 'Vive la France',
-                    'brazil': 'Brasil', 'halloween': 'Dia das Bruxas', 'ice': 'Reino do Gelo', 'candy': 'Doce',
-                    'aurora': 'Aurora Boreal', 'sunset': 'Pôr do Sol Quente'
+                    'thunder': 'Tempestade', 'sos': 'Sinal SOS', 'france': 'França',
+                    'brazil': 'Brasil', 'halloween': 'Halloween', 'ice': 'Gelo', 'candy': 'Candy',
+                    'aurora': 'Aurora Boreal', 'sunset': 'Pôr do Sol'
                 };
                 document.getElementById('status-msg').innerText = "Simulando: " + (labels[effectName] || effectName);
                 document.getElementById('status-msg').style.color = "#888";
