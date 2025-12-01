@@ -6,33 +6,14 @@ const PORT = 5000;
 const PUBLIC_DIR = '/workspaces/codespaces-react/public';
 
 // ============================================================================
-// --- MODO MANUTENÇÃO (MÉTODO ÚNICO E EFICIENTE) ---
+// --- NOTA: MODO MANUTENÇÃO AGORA ESTÁ NO INDEX.HTML ---
 // ============================================================================
-// Para ATIVAR a manutenção: altere false para true
-// Para DESATIVAR a manutenção: altere true para false
+// Para ativar/desativar manutenção, abra index.html e altere:
+// MAINTENANCE_ENABLED = false para MAINTENANCE_ENABLED = true
 // ============================================================================
-const MAINTENANCE_MODE = false;
 
 const server = http.createServer((req, res) => {
     try {
-        // VERIFICAR MODO MANUTENÇÃO
-        if (MAINTENANCE_MODE && req.url !== '/manutencao.html') {
-            // Redirecionar para página de manutenção com código 503
-            fs.readFile(path.join(process.cwd(), 'manutencao.html'), (err, data) => {
-                res.writeHead(503, {
-                    'Content-Type': 'text/html; charset=utf-8',
-                    'Retry-After': '3600',
-                    'Access-Control-Allow-Origin': '*'
-                });
-                if (!err) {
-                    res.end(data);
-                } else {
-                    res.end('<h1>503 - Serviço Indisponível</h1><p>O sistema está em manutenção.</p>');
-                }
-            });
-            return;
-        }
-
         // Se for raiz, preferir a página `torre.html` (workspace root ou public),
         // caso contrário, servir o caminho solicitado dentro de PUBLIC_DIR.
         let filePath;
@@ -101,9 +82,6 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`✓ Servidor rodando em http://localhost:${PORT}`);
     console.log(`✓ Para acessar na rede: use a porta forwarding do VS Code`);
-    if (MAINTENANCE_MODE) {
-        console.log(`⚠️  MODO MANUTENÇÃO ATIVO - Todas as requisições redirecionadas para manutencao.html com status 503`);
-        console.log(`   Para desativar: altere MAINTENANCE_MODE para false e reinicie o servidor`);
-    }
+    console.log(`ℹ️  Modo manutenção agora está NO INDEX.HTML - altere MAINTENANCE_ENABLED = true/false`);
 });
 
