@@ -14,7 +14,7 @@ const PUBLIC_DIR = '/workspaces/codespaces-react/public';
 // Para ativar: altere false para true
 // Para desativar: altere true para false
 
-const MAINTENANCE_MODE = true; // REMOVA O '#' acima desta linha para desabilitar esta variável e ativar a manutenção
+const MAINTENANCE_MODE = false; // REMOVA O '#' acima desta linha para desabilitar esta variável e ativar a manutenção
 
 const server = http.createServer((req, res) => {
     // VERIFICAR MODO MANUTENÇÃO
