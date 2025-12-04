@@ -1,20 +1,23 @@
-# Netlify - Regra de Manutenção (comentada)
-# ------------------------------------------------------------------
-# Para ativar uma manutenção forçada que responde 503 (Service Unavailable)
-# para TODAS as rotas e serve `maintenance.html`, descomente a linha abaixo.
-# Mantenha-a comentada para operação normal do site.
+# ---------------------------------------------------------------------------
+# Netlify — Regra de Manutenção (COMENTADA por segurança)
+# ---------------------------------------------------------------------------
+# Objetivo:
+#  - Forçar resposta 503 (Service Unavailable) para TODAS as rotas e servir
+#    a página /maintenance.html durante janelas de manutenção planejada.
 #
-# ATENÇÃO: quando descomentar, todo o tráfego será servido com 503 -> /maintenance.html
-#          use apenas durante janelas de manutenção planejada.
+# Uso seguro:
+#  1) Para ATIVAR a manutenção: remova o caractere `# ` no início da linha abaixo.
+#  2) Para DESATIVAR: adicione `# ` novamente e faça deploy.
 #
-# Exemplo (descomente esta linha para ativar):
-# /*  /maintenance.html  503  */
+# Exemplo — DESCOMENTE para ativar (REMOVA o `#`):
+# /* /maintenance.html  503 */
 #
-# Notas adicionais:
-# - Você também pode controlar manutenção via `netlify.toml` ou variáveis de ambiente
-#   se preferir uma abordagem baseada em CI/CD. Este arquivo fornece um método
-#   manual e explícito (descomentar para ativar).
-
+# Observações:
+#  - Ao ativar, todos os pedidos receberão 503 e o conteúdo de /maintenance.html.
+#  - Essa ação deve ser feita apenas durante janelas de manutenção planejada.
+#  - Alternativas: gerenciar via `netlify.toml`, feature flag ou variável de ambiente
+#    em seu pipeline CI se preferir uma ativação programática.
+#
 ## Histórico / fallback
 # Se sua configuração anterior usava outro mecanismo (ex: server.cjs), mantenha
-# as instruções ali; esta regra é um método direto para Netlify estático.
+# as instruções ali; esta regra é um método direto e explícito para Netlify estático.

@@ -11,17 +11,17 @@ param(
     [string]$mensagem = $null
 )
 
-# Cores para output
+# === Cores para output ===
 $Color_Success = "Green"
-$Color_Error = "Red"
-$Color_Info = "Cyan"
+$Color_Error   = "Red"
+$Color_Info    = "Cyan"
 $Color_Warning = "Yellow"
 
-# Configurações
-$ArquivoRedirects = "public\_redirects"
-$LinhaComentada = "# /*  /maintenance.html  503  */"
-$LinhaDescomentada = "/*  /maintenance.html  503  */"
-$BranchTeste = "test/manutencao-teste"
+# === Configurações ===
+$ArquivoRedirects   = "public\_redirects"
+$LinhaComentada    = "# /* /maintenance.html  503 */"
+$LinhaDescomentada  = "/* /maintenance.html  503 */"
+$BranchTeste       = "test/manutencao-teste"
 
 function Write-Success {
     param([string]$msg)
@@ -56,35 +56,35 @@ function Ativar-Manutencao {
     Validar-Git
     
     if (-not (Test-Path $ArquivoRedirects)) {
-        Write-Error-Custom "Arquivo $ArquivoRedirects não encontrado."
+        Write-Error-Custom "Arquivo '$ArquivoRedirects' não encontrado. Execute este script na raiz do repositório."
         exit 1
     }
-    
-    $conteudo = Get-Content $ArquivoRedirects -Raw
-    
+
+    $conteudo = Get-Content -Path $ArquivoRedirects -Raw
+
     if ($conteudo -match [regex]::Escape($LinhaDescomentada)) {
         Write-Warning "Manutenção já está ATIVA em $ArquivoRedirects"
-        exit 0
+        return
     }
-    
+
     if (-not ($conteudo -match [regex]::Escape($LinhaComentada))) {
         Write-Error-Custom "Linha de manutenção não encontrada em $ArquivoRedirects"
         exit 1
     }
-    
+
     $novoConteudo = $conteudo -replace [regex]::Escape($LinhaComentada), $LinhaDescomentada
-    Set-Content -Path $ArquivoRedirects -Value $novoConteudo
-    
+    Set-Content -Path $ArquivoRedirects -Value $novoConteudo -Encoding UTF8
+
     Write-Success "Manutenção ATIVADA em $ArquivoRedirects"
-    
-    Write-Info "Commitando e pushando para main…"
-    git add $ArquivoRedirects
+
+    Write-Info "Fazendo commit e push para 'main'..."
+    git add -- $ArquivoRedirects
     $msg = if ($mensagem) { $mensagem } else { "ops(manutenção): ativar manutenção forçada" }
     git commit -m $msg
     git push origin main
-    
-    Write-Success "Push concluído. Netlify está redeploya…"
-    Write-Info "Acesse seu site em alguns segundos para confirmar manutenção (status 503)"
+
+    Write-Success "Push concluído. Netlify iniciará build e deploy automaticamente."
+    Write-Info "Aguarde alguns segundos e verifique o status no Netlify dashboard."
 }
 
 function Desativar-Manutencao {
@@ -93,35 +93,35 @@ function Desativar-Manutencao {
     Validar-Git
     
     if (-not (Test-Path $ArquivoRedirects)) {
-        Write-Error-Custom "Arquivo $ArquivoRedirects não encontrado."
+        Write-Error-Custom "Arquivo '$ArquivoRedirects' não encontrado."
         exit 1
     }
-    
-    $conteudo = Get-Content $ArquivoRedirects -Raw
-    
+
+    $conteudo = Get-Content -Path $ArquivoRedirects -Raw
+
     if ($conteudo -match [regex]::Escape($LinhaComentada)) {
         Write-Warning "Manutenção já está DESATIVADA em $ArquivoRedirects"
-        exit 0
+        return
     }
-    
+
     if (-not ($conteudo -match [regex]::Escape($LinhaDescomentada))) {
         Write-Error-Custom "Linha de manutenção não encontrada em $ArquivoRedirects"
         exit 1
     }
-    
+
     $novoConteudo = $conteudo -replace [regex]::Escape($LinhaDescomentada), $LinhaComentada
-    Set-Content -Path $ArquivoRedirects -Value $novoConteudo
-    
+    Set-Content -Path $ArquivoRedirects -Value $novoConteudo -Encoding UTF8
+
     Write-Success "Manutenção DESATIVADA em $ArquivoRedirects"
-    
-    Write-Info "Commitando e pushando para main…"
-    git add $ArquivoRedirects
+
+    Write-Info "Fazendo commit e push para 'main'..."
+    git add -- $ArquivoRedirects
     $msg = if ($mensagem) { $mensagem } else { "ops(manutenção): desativar manutenção" }
     git commit -m $msg
     git push origin main
-    
-    Write-Success "Push concluído. Netlify está redeploya…"
-    Write-Info "Site retornará ao status 200 (OK) em alguns segundos"
+
+    Write-Success "Push concluído. Netlify iniciará build e deploy automaticamente."
+    Write-Info "Aguarde alguns segundos e verifique o status no Netlify dashboard."
 }
 
 function Testar-Manutencao {
