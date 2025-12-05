@@ -299,6 +299,7 @@
         // ║                                                                              ║
         // ║  ⚠️  NÃO ALTERE NADA MAIS! Apenas true/false nesta linha abaixo            ║
         // ╚══════════════════════════════════════════════════════════════════════════════╝
+        // Feature flag fallback; in most cases the Service Worker handles maintenance
         const MAINTENANCE_ENABLED = false;
         // ═══════════════════════════════════════════════════════════════════════════════
         
@@ -333,6 +334,62 @@
             
             console.log('✓ Modo manutenção desativado - Sistema operacional');
         }
+
+        // === Service Worker registration & global error handlers ===
+        (function registerSWandHandlers(){
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .then(reg => {
+                        console.log('Service Worker registrado:', reg.scope);
+                    })
+                    .catch(err => console.warn('Registro SW falhou:', err));
+            }
+
+            // If an uncaught error occurs, attempt to show maintenance to the user
+            window.addEventListener('error', (e) => {
+                try {
+                    console.error('Unhandled error captured:', e.message || e);
+                    if (!sessionStorage.getItem('maintenance_shown')) {
+                        sessionStorage.setItem('maintenance_shown', '1');
+                        window.location.href = '/maintenance.html';
+                    }
+                } catch(_){}
+            });
+
+            window.addEventListener('unhandledrejection', (ev) => {
+                try {
+                    console.error('Unhandled rejection:', ev.reason);
+                    if (!sessionStorage.getItem('maintenance_shown')) {
+                        sessionStorage.setItem('maintenance_shown', '1');
+                        window.location.href = '/maintenance.html';
+                    }
+                } catch(_){}
+            });
+
+            // If the page cannot fetch critical resources, the service worker will
+            // serve /maintenance.html automatically. We keep a small fetch test
+            // to proactively detect problems and redirect.
+            async function quickHealthCheck(){
+                try {
+                    const r = await fetch('/', { method: 'GET', cache: 'no-store' });
+                    if (r.status === 404 || r.status >= 500) {
+                        if (!sessionStorage.getItem('maintenance_shown')){
+                            sessionStorage.setItem('maintenance_shown','1');
+                            window.location.href = '/maintenance.html';
+                        }
+                    }
+                } catch(e){
+                    // network failure -> show maintenance
+                    if (!sessionStorage.getItem('maintenance_shown')){
+                        sessionStorage.setItem('maintenance_shown','1');
+                        window.location.href = '/maintenance.html';
+                    }
+                }
+            }
+
+            // Run health check shortly after load
+            window.addEventListener('load', ()=> setTimeout(quickHealthCheck, 800));
+        })();
         
         // ═══════════════════════════════════════════════════════════════════════════════
         // 2. SISTEMA DE ÁUDIO
