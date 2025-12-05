@@ -387,8 +387,10 @@
                 }
             }
 
-            // Run health check shortly after load
-            window.addEventListener('load', ()=> setTimeout(quickHealthCheck, 800));
+            // Run health check shortly after load to detect early failures
+            window.addEventListener('load', ()=> {
+              setTimeout(quickHealthCheck, 1200); // Delay um pouco para deixar tudo estável
+            });
         })();
         
         // ═══════════════════════════════════════════════════════════════════════════════
@@ -635,16 +637,19 @@
                     }
                 }, 5000);
                 
-                window.addEventListener('beforeunload', () => {
+                // Cleanup quando desconecta
+                const cleanupBeforeUnload = () => {
                     try {
-                        if(database) {
+                        if(database && keepAliveInterval) {
+                            clearInterval(keepAliveInterval);
                             const ref = database.ref('torre/status/lastActive');
                             if(ref) ref.set(0);
                         }
                     } catch(e) {
                         console.error("Erro ao limpar keep-alive:", e);
                     }
-                });
+                };
+                window.addEventListener('beforeunload', cleanupBeforeUnload, { once: true });
             } catch(e) {
                 console.error("Erro ao iniciar keep-alive:", e);
             }
@@ -751,18 +756,6 @@
             }
         }
 
-        function onResize() {
-            if(!camera || !renderer) return;
-            
-            try {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            } catch(e) {
-                console.error("Erro ao redimensionar:", e);
-            }
-        }
-
         // ═══════════════════════════════════════════════════════════════════════════════
         // 7. INICIALIZAÇÃO E ANIMAÇÃO DA TORRE
         // ═══════════════════════════════════════════════════════════════════════════════
@@ -816,19 +809,22 @@
                     try {
                         colorPicker = new iro.ColorPicker('#color-picker', { width: 220, color: "#ffaa00", borderWidth: 2, borderColor: "#fff", layout: [{ component: iro.ui.Wheel }, { component: iro.ui.Slider, options: { sliderType: 'value' } }] });
                         
+                        // Debounce color picker updates para evitar muitos Firebase writes
+                        let colorPickerTimeout;
                         colorPicker.on('color:change', (color) => {
-                            if(!color || !color.hexString) return;  // BUG FIX: Null check
+                            if(!color || !color.hexString) return;  // Validação precoce
                             
-                            // Atualiza localmente SEMPRE
                             baseColor.set(color.hexString); 
                             if (currentEffect === 'solid') applyColor(baseColor, 0.9, 2);
                             
-                            // Envia SÓ se for dono
                             if(amITheController && database) {
-                                const ref = database.ref('torre/cor');
-                                if(ref) ref.set(color.hexString).catch(err => console.error("Erro ao atualizar cor:", err));
-                                const statusRef = database.ref('torre/status/lastActive');
-                                if(statusRef) statusRef.set(Date.now()).catch(err => console.error("Erro ao atualizar status:", err));
+                                clearTimeout(colorPickerTimeout);
+                                colorPickerTimeout = setTimeout(() => {
+                                    const corRef = database.ref('torre/cor');
+                                    const statusRef = database.ref('torre/status/lastActive');
+                                    if(corRef) corRef.set(color.hexString).catch(err => console.error("Erro ao atualizar cor:", err));
+                                    if(statusRef) statusRef.set(Date.now()).catch(err => console.error("Erro ao atualizar status:", err));
+                                }, 300); // Aguarda 300ms para evitar spam
                             }
                         });
                     } catch(e) {
@@ -916,12 +912,13 @@
         }
 
         function onResize() {
-            if(!camera || !renderer) return;  // BUG FIX: Validação
+            if(!camera || !renderer) return;
             
             try {
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limita DPI para perf
             } catch(e) {
                 console.error("Erro ao redimensionar:", e);
             }
@@ -941,9 +938,10 @@
 
                 if (currentEffect === 'rainbow') {
                     const hue = (now % 4000) / 4000; applyColor(new THREE.Color().setHSL(hue, 1, 0.5), 0.9, 2);
-                const flicker = Math.random() * 0.1; const intensity = 1 + Math.random();
-                applyColor(new THREE.Color().setHSL(flicker, 1, 0.5), 0.8 + Math.random()*0.2, intensity);
-            } else if (currentEffect === 'heartbeat') {
+                } else if (currentEffect === 'fire') {
+                    const flicker = Math.random() * 0.1; const intensity = 1 + Math.random();
+                    applyColor(new THREE.Color().setHSL(flicker, 1, 0.5), 0.8 + Math.random()*0.2, intensity);
+                } else if (currentEffect === 'heartbeat') {
                 const beat = (now % 1200) / 1200; let pulse = 0;
                 if(beat < 0.2) pulse = Math.sin(beat * Math.PI * 5); else if(beat > 0.3 && beat < 0.5) pulse = Math.sin((beat-0.3) * Math.PI * 5) * 0.6; 
                 applyColor(baseColor, 0.3 + pulse * 0.7, 0.5 + pulse * 2.5);

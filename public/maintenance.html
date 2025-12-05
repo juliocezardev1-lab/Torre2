@@ -97,10 +97,16 @@
     </main>
 
     <noscript>
-      <div style="position:fixed;left:0;right:0;top:0;background:#111;padding:6px;text-align:center;color:#fff;z-index:9999">JavaScript está desativado — clique em atualizar no navegador.</div>
+      <div style="position:fixed;left:0;right:0;top:0;background:#111;padding:6px;text-align:center;color:#fff;z-index:9999;font-size:14px">
+        ⚠️ JavaScript está desativado. Recarregue a página após ativar JavaScript no navegador.
+      </div>
     </noscript>
 
     <script>
+      // Protective initialization to avoid multiple reloads
+      if (window.maintenancePageReloaded) { console.log('Already reloading...'); throw new Error('Cycle break'); }
+      window.maintenancePageReloaded = true;
+
       (function () {
         const INTERVAL = 30; // seconds
         let remaining = INTERVAL;
@@ -109,6 +115,11 @@
         const secsEl = document.getElementById('secs');
         const reloadBtn = document.getElementById('reload-now');
         const homeBtn = document.getElementById('home');
+
+        if (!countdownEl || !reloadBtn || !homeBtn) {
+          console.error('Maintenance page DOM incomplete');
+          return;
+        }
 
         function updateDisplay() {
           countdownEl.textContent = String(remaining);
@@ -129,11 +140,16 @@
         const timer = setInterval(tick, 1000);
 
         // Button handlers
-        reloadBtn.addEventListener('click', () => { try { location.reload(); } catch (e) { location.href = location.href; } });
+        reloadBtn.addEventListener('click', () => {
+          try { location.reload(); } catch (e) { location.href = location.href; }
+        });
         homeBtn.addEventListener('click', () => { location.href = '/'; });
 
         // Accessibility: focus primary action
         reloadBtn.focus();
+
+        // Cleanup on page exit
+        window.addEventListener('beforeunload', () => { clearInterval(timer); }, { once: true });
       })();
     </script>
   </body>
